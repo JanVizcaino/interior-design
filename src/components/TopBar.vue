@@ -1,6 +1,6 @@
 <template>
   <div class="topbar">
-    <h1>Diseño de Interiores 3D</h1>
+    <h1>intdesing - JAN VIZCAÍNO</h1>
     <button @click="$emit('clear')">Limpiar todo</button>
   </div>
 </template>
