@@ -7,9 +7,9 @@
 
 <script>
 export default {
-  name: 'TopBar',
-  emits: ['clear']
-}
+  name: "TopBar",
+  emits: ["clear"],
+};
 </script>
 
 <style scoped>

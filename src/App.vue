@@ -2,12 +2,24 @@
   <div class="app">
     <TopBar @clear="clearRoom" />
     <div class="main-layout">
-      <SideBar :furniture="furnitureList" />
-      <RoomScene :placedItems="placedItems" @itemPlaced="addItem" />
+      <SideBar
+        :furniture="furnitureList"
+        :floorMaterials="floorMaterials"
+        :wallMaterials="wallMaterials"
+        :selectedFloor="selectedFloor"
+        :selectedWall="selectedWall"
+        @floorChanged="selectedFloor = $event"
+        @wallChanged="selectedWall = $event"
+      />
+      <RoomScene
+        :placedItems="placedItems"
+        :selectedFloor="selectedFloor"
+        :selectedWall="selectedWall"
+        @itemPlaced="addItem"
+      />
     </div>
   </div>
 </template>
-
 <script>
 import TopBar from './components/TopBar.vue'
 import SideBar from './components/SideBar.vue'
@@ -17,27 +29,59 @@ export default {
   name: 'App',
   components: { TopBar, SideBar, RoomScene },
 
-  data() {
-    return {
-      // Lista de muebles disponibles en la barra lateral
-      furnitureList: [
-        { id: 1, name: 'Silla', color: 0x8B4513 },
-        { id: 2, name: 'Mesa',  color: 0xDEB887 },
-        { id: 3, name: 'Sofá',  color: 0x4169E1 },
-        { id: 4, name: 'Lámpara', color: 0xFFD700 },
-      ],
-      // Muebles que el usuario ha colocado en la habitación
-      placedItems: []
-    }
+data() {
+  return {
+    furnitureList: [],
+    placedItems: [],
+
+    selectedFloor: 'WoodFloor051',
+    selectedWall:  'Bricks060',
+
+    floorMaterials: [
+      { id: 'WoodFloor051', name: 'Madera',   preview: '/textures/floors/WoodFloor051/Color.jpg' },
+      { id: 'Tiles131',     name: 'Baldosas', preview: '/textures/floors/Tiles131/Color.jpg'     },
+    ],
+    wallMaterials: [
+      { id: 'Bricks060', name: 'Enlucido', preview: '/textures/walls/Bricks060/Color.jpg' },
+      { id: 'Bricks092',  name: 'Ladrillo', preview: '/textures/walls/Bricks092/Color.jpg'  },
+    ]
+  }
+},
+
+  async mounted() {
+    await this.loadFurnitureList()
   },
 
   methods: {
-    addItem(item) {
-      // Cuando RoomScene emite 'itemPlaced', añadimos el mueble a la lista
-      this.placedItems.push(item)
+    async loadFurnitureList() {
+      try {
+        const res = await fetch('/models/index.json')
+        const files = await res.json()
+
+        this.furnitureList = files.map((filename, index) => {
+          const name = filename
+            .replace('.glb', '')
+            .replace(/[-_]/g, ' ')
+            .replace(/\b\w/g, l => l.toUpperCase())
+
+          return {
+            id: index + 1,
+            name,
+            model: `/models/${filename}`,
+            scale: 3,
+          }
+        })
+
+      } catch (e) {
+        console.error('Error cargando index.json:', e)
+      }
     },
+
+    addItem(item) {
+      this.placedItems = [...this.placedItems, item]
+    },
+
     clearRoom() {
-      // Vaciamos la lista (TopBar emite 'clear')
       this.placedItems = []
     }
   }
