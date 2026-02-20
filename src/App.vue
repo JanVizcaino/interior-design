@@ -1,7 +1,8 @@
 <template>
-  <div class="app">
+  <div class="flex flex-col h-screen w-full bg-slate-50 text-slate-900 font-sans antialiased">
     <TopBar @clear="clearRoom" />
-    <div class="main-layout">
+    
+    <div class="flex flex-1 overflow-hidden relative">
       <SideBar
         :furniture="furnitureList"
         :floorMaterials="floorMaterials"
@@ -29,7 +30,6 @@ import { ref, onMounted } from "vue";
 import TopBar from "./components/TopBar.vue";
 import SideBar from "./components/SideBar.vue";
 import RoomScene from "./components/RoomScene.vue";
-
 
 const furnitureList = ref([]);
 const placedItems = ref([]);
@@ -64,7 +64,6 @@ const wallMaterials = [
   },
 ];
 
-
 async function loadFurnitureList() {
   try {
     const res = await fetch("/models/index.json");
@@ -97,16 +96,3 @@ onMounted(async () => {
   await loadFurnitureList();
 });
 </script>
-
-<style>
-.app {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-}
-.main-layout {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
-</style>

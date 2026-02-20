@@ -1,28 +1,13 @@
 <template>
-  <div class="topbar">
-    <button @click="$emit('clear')">Limpiar todo</button>
+  <div class="flex justify-between items-center px-6 py-3 bg-slate-800 text-white shadow-md z-10 relative">
+    
+    <h1 class="text-lg font-bold tracking-tight text-slate-100">
+      <span class="text-blue-400">int</span>design <span class="font-normal text-slate-400 text-sm ml-2">| JAN VIZCAÍNO</span>
+    </h1>
+
   </div>
 </template>
 
 <script setup>
 defineEmits(["clear"]);
 </script>
-
-<style scoped>
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 20px;
-  background: #2c3e50;
-  color: white;
-}
-button {
-  padding: 8px 16px;
-  background: #e74c3c;
-  color: white;
-  border: none;
-  cursor: pointer;
-  border-radius: 4px;
-}
-</style>

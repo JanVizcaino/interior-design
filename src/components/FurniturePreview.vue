@@ -1,6 +1,16 @@
 <template>
-  <img v-if="imageUrl" :src="imageUrl" class="preview-img" />
-  <div v-else class="preview-placeholder">...</div>
+  <img 
+    v-if="imageUrl" 
+    :src="imageUrl" 
+    class="w-[60px] h-[60px] rounded-md shrink-0 object-contain drop-shadow-sm transition-opacity duration-300" 
+  />
+  
+  <div 
+    v-else 
+    class="w-[60px] h-[60px] rounded-md bg-slate-200 flex items-center justify-center text-[10px] font-medium text-slate-400 shrink-0 animate-pulse"
+  >
+    ...
+  </div>
 </template>
 
 <script setup>
@@ -8,7 +18,9 @@ import { ref, onMounted } from "vue";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-
+// ═══════════════════════════════════════════
+// PATRÓN SINGLETON (A prueba de Vite HMR)
+// ═══════════════════════════════════════════
 let sharedRenderer = null;
 let sharedScene = null;
 let sharedCamera = null;
@@ -91,25 +103,3 @@ onMounted(() => {
   renderPreview();
 });
 </script>
-
-<style scoped>
-.preview-img {
-  width: 60px;
-  height: 60px;
-  border-radius: 4px;
-  flex-shrink: 0;
-  object-fit: contain;
-}
-.preview-placeholder {
-  width: 60px;
-  height: 60px;
-  border-radius: 4px;
-  background: #ddd;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  color: #999;
-  flex-shrink: 0;
-}
-</style>

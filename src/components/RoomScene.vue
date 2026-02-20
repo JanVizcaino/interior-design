@@ -1,6 +1,6 @@
 <template>
   <div
-    class="room-container"
+    class="flex-1 overflow-hidden"
     ref="container"
     @drop="onDrop"
     @dragover.prevent
@@ -395,10 +395,3 @@ function onResize() {
   renderer.setSize(container.value.clientWidth, container.value.clientHeight);
 }
 </script>
-
-<style scoped>
-.room-container {
-  flex: 1;
-  overflow: hidden;
-}
-</style>
