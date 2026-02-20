@@ -3,16 +3,22 @@
   <div v-else class="preview-placeholder">...</div>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted } from "vue";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
 
 let sharedRenderer = null;
 let sharedScene = null;
 let sharedCamera = null;
 
 function getSharedRenderer() {
-  if (sharedRenderer) return sharedRenderer;
+  if (window.__sharedThreeRenderer) {
+    sharedScene = window.__sharedThreeScene;
+    sharedCamera = window.__sharedThreeCamera;
+    return window.__sharedThreeRenderer;
+  }
 
   const canvas = document.createElement("canvas");
   canvas.width = 60;
@@ -37,58 +43,53 @@ function getSharedRenderer() {
   dir.position.set(3, 5, 3);
   sharedScene.add(dir);
 
+  window.__sharedThreeRenderer = sharedRenderer;
+  window.__sharedThreeScene = sharedScene;
+  window.__sharedThreeCamera = sharedCamera;
+
   return sharedRenderer;
 }
 
 const loader = new GLTFLoader();
 
-export default {
-  name: "FurniturePreview",
+const props = defineProps({
+  model: { type: String, required: true },
+});
 
-  props: {
-    model: { type: String, required: true },
-  },
+const imageUrl = ref(null);
 
-  data() {
-    return {
-      imageUrl: null,
-    };
-  },
+function renderPreview() {
+  loader.load(
+    props.model,
+    (gltf) => {
+      const renderer = getSharedRenderer();
+      const obj = gltf.scene;
 
-  mounted() {
-    this.renderPreview();
-  },
+      const box = new THREE.Box3().setFromObject(obj);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+      
+      obj.position.sub(center);
+      obj.scale.setScalar(1.5 / maxDim);
 
-  methods: {
-    renderPreview() {
-      loader.load(
-        this.model,
-        (gltf) => {
-          const renderer = getSharedRenderer();
-          const obj = gltf.scene;
+      sharedScene.add(obj);
+      renderer.render(sharedScene, sharedCamera);
 
-          const box = new THREE.Box3().setFromObject(obj);
-          const center = box.getCenter(new THREE.Vector3());
-          const size = box.getSize(new THREE.Vector3());
-          const maxDim = Math.max(size.x, size.y, size.z);
-          obj.position.sub(center);
-          obj.scale.setScalar(1.5 / maxDim);
+      imageUrl.value = renderer.domElement.toDataURL();
 
-          sharedScene.add(obj);
-          renderer.render(sharedScene, sharedCamera);
-
-          this.imageUrl = renderer.domElement.toDataURL();
-
-          sharedScene.remove(obj);
-        },
-        undefined,
-        (err) => {
-          console.error("Preview error:", this.model, err);
-        },
-      );
+      sharedScene.remove(obj);
     },
-  },
-};
+    undefined,
+    (err) => {
+      console.error("Preview error:", props.model, err);
+    }
+  );
+}
+
+onMounted(() => {
+  renderPreview();
+});
 </script>
 
 <style scoped>

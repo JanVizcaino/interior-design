@@ -1,15 +1,11 @@
 <template>
   <div class="topbar">
-    <h1>intdesing - JAN VIZCAÍNO</h1>
     <button @click="$emit('clear')">Limpiar todo</button>
   </div>
 </template>
 
-<script>
-export default {
-  name: "TopBar",
-  emits: ["clear"],
-};
+<script setup>
+defineEmits(["clear"]);
 </script>
 
 <style scoped>

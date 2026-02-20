@@ -2,7 +2,7 @@
   <div class="sidebar">
     <h3 class="section-title">Opciones</h3>
     <div class="toggle-option">
-      <span>Mostrar grid</span>
+      <span>Grid</span>
       <div
         class="toggle"
         :class="{ active: showGrid }"
@@ -50,29 +50,23 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import FurniturePreview from "./FurniturePreview.vue";
 
-export default {
-  name: "SideBar",
-  components: { FurniturePreview },
+defineProps({
+  furniture: { type: Array, required: true },
+  floorMaterials: { type: Array, required: true },
+  wallMaterials: { type: Array, required: true },
+  selectedFloor: { type: String, required: true },
+  selectedWall: { type: String, required: true },
+  showGrid: { type: Boolean, required: true },
+});
 
-  props: {
-    furniture: { type: Array, required: true },
-    floorMaterials: { type: Array, required: true },
-    wallMaterials: { type: Array, required: true },
-    selectedFloor: { type: String, required: true },
-    selectedWall: { type: String, required: true },
-    showGrid: { type: Boolean, required: true },
-  },
-  emits: ["wallChanged", "floorChanged", "gridChanged"],
+defineEmits(["wallChanged", "floorChanged", "gridChanged"]);
 
-  methods: {
-    onDragStart(event, item) {
-      event.dataTransfer.setData("furniture", JSON.stringify(item));
-    },
-  },
-};
+function onDragStart(event, item) {
+  event.dataTransfer.setData("furniture", JSON.stringify(item));
+}
 </script>
 
 <style scoped>

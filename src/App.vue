@@ -23,87 +23,79 @@
     </div>
   </div>
 </template>
-<script>
+
+<script setup>
+import { ref, onMounted } from "vue";
 import TopBar from "./components/TopBar.vue";
 import SideBar from "./components/SideBar.vue";
 import RoomScene from "./components/RoomScene.vue";
 
-export default {
-  name: "App",
-  components: { TopBar, SideBar, RoomScene },
 
-  data() {
-    return {
-      furnitureList: [],
-      placedItems: [],
+const furnitureList = ref([]);
+const placedItems = ref([]);
 
-      selectedFloor: "WoodFloor051",
-      selectedWall: "Bricks060",
+const selectedFloor = ref("WoodFloor051");
+const selectedWall = ref("Bricks060");
+const showGrid = ref(false);
 
-      showGrid: false,
-
-      floorMaterials: [
-        {
-          id: "WoodFloor051",
-          name: "Madera",
-          preview: "/textures/floors/WoodFloor051/Color.jpg",
-        },
-        {
-          id: "Tiles131",
-          name: "Baldosas",
-          preview: "/textures/floors/Tiles131/Color.jpg",
-        },
-      ],
-      wallMaterials: [
-        {
-          id: "Bricks060",
-          name: "Enlucido",
-          preview: "/textures/walls/Bricks060/Color.jpg",
-        },
-        {
-          id: "Bricks092",
-          name: "Ladrillo",
-          preview: "/textures/walls/Bricks092/Color.jpg",
-        },
-      ],
-    };
+const floorMaterials = [
+  {
+    id: "WoodFloor051",
+    name: "Parquet",
+    preview: "/textures/floors/WoodFloor051/Color.jpg",
   },
-
-  async mounted() {
-    await this.loadFurnitureList();
+  {
+    id: "Tiles131",
+    name: "Baldosas",
+    preview: "/textures/floors/Tiles131/Color.jpg",
   },
+];
 
-  methods: {
-    async loadFurnitureList() {
-      try {
-        const res = await fetch("/models/index.json");
-        const files = await res.json();
-
-        this.furnitureList = files.map((filename, index) => {
-          const name = filename
-            .replace(".glb", "")
-
-          return {
-            id: index + 1,
-            name,
-            model: `/models/${filename}`,
-            scale: 3,
-          };
-        });
-      } catch (e) {
-        console.error("Error cargando index.json:", e);
-      }
-    },
-
-    addItem(item) {
-      this.placedItems = [...this.placedItems, item];
-    },
-
-    clearRoom() {
-      this.placedItems = [];
-    },
+const wallMaterials = [
+  {
+    id: "Bricks060",
+    name: "Ladrillo Rojo",
+    preview: "/textures/walls/Bricks060/Color.jpg",
   },
-};
+  {
+    id: "Bricks092",
+    name: "Ladrillo Blanco",
+    preview: "/textures/walls/Bricks092/Color.jpg",
+  },
+];
+
+
+async function loadFurnitureList() {
+  try {
+    const res = await fetch("/models/index.json");
+    const files = await res.json();
+
+    furnitureList.value = files.map((filename, index) => {
+      const name = filename.replace(".glb", "");
+
+      return {
+        id: index + 1,
+        name,
+        model: `/models/${filename}`,
+        scale: 3,
+      };
+    });
+  } catch (e) {
+    console.error("Error cargando index.json:", e);
+  }
+}
+
+function addItem(item) {
+  placedItems.value = [...placedItems.value, item];
+}
+
+function clearRoom() {
+  placedItems.value = [];
+}
+
+onMounted(async () => {
+  await loadFurnitureList();
+});
 </script>
 
 <style>
