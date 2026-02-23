@@ -2,12 +2,12 @@
   <img 
     v-if="imageUrl" 
     :src="imageUrl" 
-    class="w-[60px] h-[60px] rounded-md shrink-0 object-contain drop-shadow-sm transition-opacity duration-300" 
+    class="w-15 h-15 rounded-md shrink-0 object-contain drop-shadow-sm transition-opacity duration-300" 
   />
   
   <div 
     v-else 
-    class="w-[60px] h-[60px] rounded-md bg-slate-200 flex items-center justify-center text-[10px] font-medium text-slate-400 shrink-0 animate-pulse"
+    class="w-15 h-15 rounded-md bg-slate-200 flex items-center justify-center text-[10px] font-medium text-slate-400 shrink-0 animate-pulse"
   >
     ...
   </div>
