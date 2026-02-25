@@ -61,7 +61,7 @@
                 : 'text-slate-400 group-hover:text-blue-500 transition-colors'
             "
           >
-            <Grid2X2 class="w-5 h-5" />
+            <LayoutGrid class="w-5 h-5" />
           </div>
           <span
             class="text-sm font-medium flex-1"
