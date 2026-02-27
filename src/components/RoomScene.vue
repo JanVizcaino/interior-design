@@ -18,9 +18,10 @@ const props = defineProps({
   selectedFloor: { type: String, required: true },
   selectedWall: { type: String, required: true },
   showGrid: { type: Boolean, required: true },
+  currentMode: { type: String, required: true },
 });
 
-const emit = defineEmits(["itemPlaced"]);
+const emit = defineEmits(["itemPlaced", "itemRemoved", "itemUpdated"]);
 const container = ref(null); 
 
 let scene, camera, renderer, controls;
@@ -28,7 +29,10 @@ let floorMesh = null;
 let wallMeshes = [];
 let gridHelper = null;
 let mouseDownPos = null;
-let isDragging = false;
+let isDraggingCamera = false;
+
+let hoveredModel = null; 
+let movingModel = null;  
 
 const loader = new GLTFLoader();
 const meshMap = {}; 
@@ -40,6 +44,7 @@ onMounted(() => {
   container.value.addEventListener("click", onSceneClick);
   container.value.addEventListener("mousedown", onMouseDown);
   container.value.addEventListener("mouseup", onMouseUp);
+  container.value.addEventListener("mousemove", onMouseMove); 
 });
 
 onBeforeUnmount(() => {
@@ -47,11 +52,20 @@ onBeforeUnmount(() => {
   container.value.removeEventListener("click", onSceneClick);
   container.value.removeEventListener("mousedown", onMouseDown);
   container.value.removeEventListener("mouseup", onMouseUp);
+  container.value.removeEventListener("mousemove", onMouseMove);
   
   if (renderer) {
     renderer.forceContextLoss(); 
     renderer.dispose();           
     renderer.domElement.remove(); 
+  }
+});
+
+watch(() => props.currentMode, () => {
+  if (movingModel) {
+    highlightModel(movingModel, false);
+    movingModel = null;
+    controls.enabled = true;
   }
 });
 
@@ -179,6 +193,134 @@ function animate() {
   }
 }
 
+function onMouseDown(event) {
+  mouseDownPos = { x: event.clientX, y: event.clientY };
+}
+
+function onMouseUp(event) {
+  if (!mouseDownPos) return;
+  const dx = event.clientX - mouseDownPos.x;
+  const dy = event.clientY - mouseDownPos.y;
+  isDraggingCamera = Math.sqrt(dx * dx + dy * dy) > 5;
+}
+
+function onMouseMove(event) {
+  const rect = container.value.getBoundingClientRect();
+  const mouse = new THREE.Vector2(
+    ((event.clientX - rect.left) / rect.width) * 2 - 1,
+    ((event.clientY - rect.top) / rect.height) * -2 + 1
+  );
+
+  const raycaster = new THREE.Raycaster();
+  raycaster.setFromCamera(mouse, camera);
+
+  if (movingModel) {
+    const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    const targetPoint = new THREE.Vector3();
+    
+    if (raycaster.ray.intersectPlane(floorPlane, targetPoint)) {
+      movingModel.position.x = targetPoint.x;
+      movingModel.position.z = targetPoint.z;
+      movingModel.updateMatrixWorld(true);
+
+      const box = new THREE.Box3().setFromObject(movingModel);
+      const roomLimit = 5;
+      let offsetX = 0, offsetZ = 0;
+
+      if (box.min.x < -roomLimit) offsetX = -roomLimit - box.min.x;
+      if (box.max.x > roomLimit) offsetX = roomLimit - box.max.x;
+      if (box.min.z < -roomLimit) offsetZ = -roomLimit - box.min.z;
+      if (box.max.z > roomLimit) offsetZ = roomLimit - box.max.z;
+
+      movingModel.position.x += offsetX;
+      movingModel.position.z += offsetZ;
+      movingModel.updateMatrixWorld(true);
+    }
+    return; 
+  }
+
+  const models = Object.values(meshMap);
+  const intersects = raycaster.intersectObjects(models, true);
+
+  if (intersects.length > 0) {
+    const rootModel = getRootModel(intersects[0].object);
+    
+    if (rootModel !== hoveredModel) {
+      if (hoveredModel) highlightModel(hoveredModel, false); 
+      hoveredModel = rootModel;
+      highlightModel(hoveredModel, true); 
+    }
+
+    if (props.currentMode === 'delete') container.value.style.cursor = 'no-drop';
+    else if (props.currentMode === 'move') container.value.style.cursor = 'grab';
+    else container.value.style.cursor = 'pointer';
+
+  } else {
+    if (hoveredModel) {
+      highlightModel(hoveredModel, false);
+      hoveredModel = null;
+    }
+    container.value.style.cursor = 'default';
+  }
+}
+
+function highlightModel(model, active) {
+  let hex = 0x000000; 
+  
+  if (active) {
+    if (props.currentMode === 'delete') hex = 0xff0000; 
+    else if (props.currentMode === 'move') hex = 0x0088ff;
+    else hex = 0x88aa00; 
+  }
+
+  model.traverse((child) => {
+    if (child.isMesh && child.material) {
+
+      child.material.emissive.setHex(hex);
+      child.material.emissiveIntensity = 0.5;
+    }
+  });
+}
+
+function onSceneClick(event) {
+  if (isDraggingCamera) return; 
+
+  if (movingModel) {
+    const uid = movingModel.userData.uid;
+    const item = props.placedItems.find((i) => i.uid === uid);
+    
+    emit('itemUpdated', {
+      ...item,
+      x: movingModel.position.x,
+      z: movingModel.position.z
+    });
+    
+    highlightModel(movingModel, false);
+    movingModel = null;
+    controls.enabled = true;
+    container.value.style.cursor = 'default';
+    return;
+  }
+
+  if (hoveredModel) {
+    const rootModel = hoveredModel;
+
+    if (props.currentMode === 'delete') {
+      emit('itemRemoved', rootModel.userData.uid);
+      hoveredModel = null;
+      container.value.style.cursor = 'default';
+      
+    } else if (props.currentMode === 'move') {
+      movingModel = rootModel;
+      controls.enabled = false; 
+      container.value.style.cursor = 'grabbing';
+      
+    } else {
+      rotateModel(rootModel); 
+    }
+  }
+}
+
 function onDrop(event) {
   const data = event.dataTransfer.getData("furniture");
   if (!data) return;
@@ -264,6 +406,12 @@ function loadModel(item) {
         const s = item.scale || 1;
         model.scale.set(s, s, s);
 
+        model.traverse((child) => {
+          if (child.isMesh && child.material) {
+            child.material = child.material.clone(); 
+          }
+        });
+
         wrapper.add(model);
         wrapper.position.set(item.x, 0, item.z);
         wrapper.userData.uid = item.uid;
@@ -288,38 +436,6 @@ function createFallbackMesh(item) {
   mesh.position.set(item.x, 0.5, item.z);
   mesh.userData.uid = item.uid;
   return mesh;
-}
-
-function onMouseDown(event) {
-  mouseDownPos = { x: event.clientX, y: event.clientY };
-}
-
-function onMouseUp(event) {
-  if (!mouseDownPos) return;
-  const dx = event.clientX - mouseDownPos.x;
-  const dy = event.clientY - mouseDownPos.y;
-  isDragging = Math.sqrt(dx * dx + dy * dy) > 5;
-}
-
-function onSceneClick(event) {
-  if (isDragging) return;
-
-  const rect = container.value.getBoundingClientRect();
-  const mouse = new THREE.Vector2(
-    ((event.clientX - rect.left) / rect.width) * 2 - 1,
-    ((event.clientY - rect.top) / rect.height) * -2 + 1
-  );
-
-  const raycaster = new THREE.Raycaster();
-  raycaster.setFromCamera(mouse, camera);
-
-  const models = Object.values(meshMap);
-  const intersects = raycaster.intersectObjects(models, true);
-
-  if (intersects.length > 0) {
-    const rootModel = getRootModel(intersects[0].object);
-    if (rootModel) rotateModel(rootModel);
-  }
 }
 
 function getRootModel(object) {

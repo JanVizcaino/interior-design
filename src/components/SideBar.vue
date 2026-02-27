@@ -2,24 +2,33 @@
   <div
     class="w-70 bg-slate-50 p-5 border-r border-slate-200 overflow-y-auto flex flex-col gap-6"
   >
-<div>
+    <div>
       <div class="flex items-center justify-between mb-3">
-        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Muebles</h3>
+        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">
+          Muebles
+        </h3>
       </div>
-      
+
       <div class="relative mb-4 group">
-        <Search class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
-        
-        <input 
+        <Search
+          class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors"
+        />
+
+        <input
           v-model="searchQuery"
-          type="text" 
-          placeholder="Buscar mueble..." 
+          type="text"
+          placeholder="Buscar mueble..."
           class="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-sm transition-all"
         />
       </div>
 
-      <div v-if="filteredFurniture.length === 0" class="text-center py-6 px-4 border-2 border-dashed border-slate-200 rounded-xl">
-        <span class="text-sm text-slate-400">No se encontraron muebles que coincidan con "{{ searchQuery }}"</span>
+      <div
+        v-if="filteredFurniture.length === 0"
+        class="text-center py-6 px-4 border-2 border-dashed border-slate-200 rounded-xl"
+      >
+        <span class="text-sm text-slate-400"
+          >No se encontraron muebles que coincidan con "{{ searchQuery }}"</span
+        >
       </div>
 
       <div v-else class="max-h-87.5 overflow-y-auto pr-2">
@@ -30,10 +39,14 @@
           draggable="true"
           @dragstart="onDragStart($event, item)"
         >
-          <div class="w-12 h-12 shrink-0 bg-slate-100 rounded-lg overflow-hidden flex items-center justify-center border border-slate-200">
+          <div
+            class="w-12 h-12 shrink-0 bg-slate-100 rounded-lg overflow-hidden flex items-center justify-center border border-slate-200"
+          >
             <FurniturePreview :model="item.model" :scale="item.scale" />
           </div>
-          <span class="text-sm font-medium text-slate-700 truncate">{{ item.name }}</span>
+          <span class="text-sm font-medium text-slate-700 truncate">{{
+            item.name
+          }}</span>
         </div>
       </div>
     </div>
@@ -75,16 +88,17 @@
         </button>
 
         <button
+          @click="$emit('modeChanged', 'move')"
           class="flex items-center gap-3 w-full p-3 rounded-xl border-2 transition-all duration-200 text-left group outline-none"
           :class="
-            isMoving
+            currentMode === 'move'
               ? 'bg-blue-50 border-blue-500 shadow-sm'
               : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50'
           "
         >
           <div
             :class="
-              isMoving
+              currentMode === 'move'
                 ? 'text-blue-600'
                 : 'text-slate-400 group-hover:text-blue-500 transition-colors'
             "
@@ -93,26 +107,27 @@
           </div>
           <span
             class="text-sm font-medium flex-1"
-            :class="isMoving ? 'text-blue-700' : 'text-slate-700'"
+            :class="currentMode === 'move' ? 'text-blue-700' : 'text-slate-700'"
             >Mover elementos</span
           >
           <div
-            v-if="isMoving"
-            class="w-2 h-2 rounded-full bg-blue-500 shadow-sm"
+            v-if="currentMode === 'move'"
+            class="w-2 h-2 rounded-full bg-blue-500 shadow-sm animate-pulse"
           ></div>
         </button>
 
         <button
+          @click="$emit('modeChanged', 'delete')"
           class="flex items-center gap-3 w-full p-3 rounded-xl border-2 transition-all duration-200 text-left group outline-none"
           :class="
-            isDeleting
+            currentMode === 'delete'
               ? 'bg-red-50 border-red-500 shadow-sm'
               : 'bg-white border-slate-200 hover:border-red-300 hover:bg-slate-50'
           "
         >
           <div
             :class="
-              isDeleting
+              currentMode === 'delete'
                 ? 'text-red-600'
                 : 'text-slate-400 group-hover:text-red-500 transition-colors'
             "
@@ -121,12 +136,14 @@
           </div>
           <span
             class="text-sm font-medium flex-1"
-            :class="isDeleting ? 'text-red-700' : 'text-slate-700'"
+            :class="
+              currentMode === 'delete' ? 'text-red-700' : 'text-slate-700'
+            "
             >Eliminar elemento</span
           >
           <div
-            v-if="isDeleting"
-            class="w-2 h-2 rounded-full bg-red-500 shadow-sm"
+            v-if="currentMode === 'delete'"
+            class="w-2 h-2 rounded-full bg-red-500 shadow-sm animate-pulse"
           ></div>
         </button>
 
@@ -199,7 +216,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue"; // <-- 1. Importar ref y computed
+import { ref, computed } from "vue";
 import FurniturePreview from "./FurniturePreview.vue";
 import { Trash, Search, Move, Eraser, LayoutGrid } from "lucide-vue-next";
 
@@ -210,21 +227,24 @@ const props = defineProps({
   selectedFloor: { type: String, required: true },
   selectedWall: { type: String, required: true },
   showGrid: { type: Boolean, required: true },
+  currentMode: { type: String, required: true },
 });
 
-defineEmits(["wallChanged", "floorChanged", "gridChanged", "clear"]);
+defineEmits([
+  "wallChanged",
+  "floorChanged",
+  "gridChanged",
+  "clear",
+  "modeChanged",
+]);
 
-// 2. Variable reactiva para el texto de búsqueda
 const searchQuery = ref("");
 
-// 3. Propiedad computada que filtra los muebles automáticamente
 const filteredFurniture = computed(() => {
-  // Si el buscador está vacío, devolvemos toda la lista
   if (!searchQuery.value.trim()) {
     return props.furniture;
   }
 
-  // Si hay texto, filtramos buscando coincidencias en el nombre
   const query = searchQuery.value.toLowerCase();
   return props.furniture.filter((item) =>
     item.name.toLowerCase().includes(query),

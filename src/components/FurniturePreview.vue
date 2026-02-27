@@ -18,9 +18,6 @@ import { ref, onMounted } from "vue";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-// ═══════════════════════════════════════════
-// PATRÓN SINGLETON (A prueba de Vite HMR)
-// ═══════════════════════════════════════════
 let sharedRenderer = null;
 let sharedScene = null;
 let sharedCamera = null;
